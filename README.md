@@ -1,70 +1,108 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Campaign Manager
 
-## Available Scripts
+This project is a web application split into two parts:
+- **Backend**: A Spring Boot application using H2 in-memory database.
+- **Frontend**: A React application served via Nginx.
 
-In the project directory, you can run:
+The application is containerized using Docker, with both frontend and backend running in separate containers managed by Docker Compose.
 
-### `npm start`
+## Prerequisites
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Ensure you have the following installed:
+- **Docker**: [Install Docker](https://www.docker.com/products/docker-desktop).
+- **Docker Compose**: It comes pre-installed with Docker Desktop. For Linux, you may need to install it separately.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Running the Application with Docker
 
-### `npm test`
+This guide will help you set up and run the Campaign Manager application using Docker.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Step 1: Clone the Repository
 
-### `npm run build`
+First, clone this repository to your local machine:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+git clone https://github.com/your-repo/campaign-manager.git
+cd campaign-manager
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Step 2: Build and Run the Docker Containers
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+To build and start the containers for both the backend and frontend, use Docker Compose:
 
-### `npm run eject`
+```bash
+docker-compose up --build
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+This command will:
+- Build the **backend** (Spring Boot application) and the **frontend** (React application).
+- Start both containers and connect them via Docker's networking.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Step 3: Access the Application
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Once the containers are running, you can access the services:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- **Frontend (React App)**: [http://localhost:3000](http://localhost:3000)  
+  This is the user-facing interface.
 
-## Learn More
+- **Backend (Spring Boot API)**: [http://localhost:8080](http://localhost:8080)  
+  This is the API where data is processed.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+#### H2 Database Console Details:
 
-### Code Splitting
+- **JDBC URL**: `jdbc:h2:mem:testdb`
+- **Username**: `user`
+- **Password**: `user`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Step 4: Stopping the Containers
 
-### Analyzing the Bundle Size
+To stop the containers, press `CTRL+C` in the terminal where Docker Compose is running.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Alternatively, you can stop the containers by running:
 
-### Making a Progressive Web App
+```bash
+docker-compose down
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+This will stop and remove the containers but leave the built images intact.
 
-### Advanced Configuration
+### Step 5: Removing Containers and Images
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+If you want to remove both the containers and the images (to rebuild everything from scratch), use:
 
-### Deployment
+```bash
+docker-compose down --rmi all
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Application Details
 
-### `npm run build` fails to minify
+### Backend (Spring Boot)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- **Port**: `8080`
+- **Database**: H2 (in-memory)
+- **Environment Variables** (defined in `docker-compose.yml`):
+  - `SPRING_APPLICATION_NAME=backend`
+  - `SPRING_DATASOURCE_URL=jdbc:h2:mem:testdb`
+  - `SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver`
+  - `SPRING_DATASOURCE_USERNAME=user`
+  - `SPRING_DATASOURCE_PASSWORD=user`
+  - `SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop`
+  - `SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.H2Dialect`
+
+### Frontend (React)
+
+- **Port**: `3000`
+- The React app is built using Node.js and served via Nginx.
+
+## Project Structure
+
+- **backend/**: Contains the Spring Boot application code.
+- **src/**: Contains the React frontend application.
+- **docker-compose.yml**: Defines the Docker services and how the backend and frontend containers should run.
+
+---
+
+## License
+
+[MIT License](LICENSE)
