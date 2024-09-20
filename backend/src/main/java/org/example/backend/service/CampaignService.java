@@ -9,7 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+/**
+ * Service class for managing campaigns. Provides methods for creating, updating,
+ * finding, and deleting campaigns, as well as interacting with the
+ * {@link EmeraldAccountService} to ensure sufficient funds are available for
+ * campaign creation and updates.
+ */
 @Service
 public class CampaignService {
 
@@ -18,17 +23,22 @@ public class CampaignService {
 
     @Autowired
     private EmeraldAccountService emeraldAccountService;
-
-    // Save a new campaign
+    /**
+     * Saves a new campaign. It checks if there are sufficient funds in the
+     * EmeraldAccount before creating the campaign.
+     *
+     * @param campaignRequest the request containing campaign details
+     * @return the saved {@link Campaign}
+     * @throws IllegalArgumentException if there are insufficient funds
+     */
     public Campaign save(CampaignRequest campaignRequest) {
         EmeraldAccount account = emeraldAccountService.getAccount();
 
-        // Check if there are sufficient funds
+
         if (account.getBalance() < campaignRequest.campaignFund()) {
             throw new IllegalArgumentException("Insufficient funds in the account");
         }
 
-        // Deduct campaign fund from account balance
         emeraldAccountService.updateAccount(account.getBalance() - campaignRequest.campaignFund());
 
         Campaign campaign = new Campaign();
@@ -42,25 +52,43 @@ public class CampaignService {
 
         return campaignRepository.save(campaign);
     }
-
-    // Get all campaigns
+    /**
+     * Retrieves all campaigns.
+     *
+     * @return a list of {@link Campaign} objects
+     */
     public List<Campaign> findAll() {
         return campaignRepository.findAll();
     }
-
-    // Find a campaign by ID
+    /**
+     * Finds a campaign by its ID.
+     *
+     * @param id the ID of the campaign to find
+     * @return the {@link Campaign} if found
+     * @throws ResourceNotFoundException if no campaign is found with the given ID
+     */
     public Campaign findById(Long id) {
         return campaignRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found with id: " + id));
     }
-
-    // Delete a campaign
+    /**
+     * Deletes a campaign by its ID.
+     *
+     * @param id the ID of the campaign to delete
+     */
     public void delete(Long id) {
         Campaign campaign = findById(id);
         campaignRepository.delete(campaign);
     }
-
-    // Update an existing campaign
+    /**
+     * Updates an existing campaign. It adjusts the EmeraldAccount balance if
+     * the campaign fund is modified.
+     *
+     * @param id the ID of the campaign to update
+     * @param campaignDetails the request containing updated campaign details
+     * @return the updated {@link Campaign}
+     * @throws IllegalArgumentException if there are insufficient funds for the update
+     */
     public Campaign update(Long id, CampaignRequest campaignDetails) {
         Campaign existingCampaign = findById(id);
         Double oldFund = existingCampaign.getCampaignFund();
@@ -68,24 +96,19 @@ public class CampaignService {
 
         EmeraldAccount account = emeraldAccountService.getAccount();
 
-        // Calculate the difference between the old and new campaign funds
         Double difference = newFund - oldFund;
 
-        // If the new fund is greater than the old fund (i.e., increasing the fund)
         if (difference > 0) {
             if (account.getBalance() < difference) {
                 throw new IllegalArgumentException("Insufficient funds for updating the campaign.");
             }
-            // Deduct the difference from the account balance
             emeraldAccountService.updateAccount(account.getBalance() - difference);
 
         } else if (difference < 0) {
-            // If the new fund is smaller than the old fund (i.e., decreasing the fund)
-            // Add the difference back to the account balance (since the difference will be negative, this adds the absolute value)
+
             emeraldAccountService.updateAccount(account.getBalance() + Math.abs(difference));
         }
 
-        // Update campaign fields
         existingCampaign.setCampaignName(campaignDetails.campaignName());
         existingCampaign.setKeywords(campaignDetails.keywords());
         existingCampaign.setBidAmount(campaignDetails.bidAmount());

@@ -4,7 +4,17 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.aspectj.weaver.ast.Not;
-
+/**
+ * Record representing a request to create or update a Campaign.
+ *
+ * @param campaignName the name of the campaign, must not be blank
+ * @param keywords the keywords for the campaign, must not be blank
+ * @param bidAmount the bid amount for the campaign, must be greater than 0
+ * @param campaignFund the fund allocated for the campaign, must be greater than 0
+ * @param status the status of the campaign (true for active, false for inactive)
+ * @param town the town for the campaign, must not be blank
+ * @param radius the radius for the campaign in kilometers, must be greater than 0
+ */
 public record CampaignRequest(
         @NotBlank(message = "Campaign name is mandatory")
         String campaignName,
