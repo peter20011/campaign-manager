@@ -21,13 +21,8 @@ public class EmeraldAccount {
 
     @NotNull(message = "Balance is mandatory")
     @Column(nullable = false)
-    private BigDecimal balance;
-
-    @OneToMany(mappedBy = "emeraldAccount", cascade = CascadeType.ALL)
-    private List<Campaign> campaigns;
+    private Double balance;
 
     public EmeraldAccount() {}
-
-
 
 }

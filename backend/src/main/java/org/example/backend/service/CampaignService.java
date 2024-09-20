@@ -1,7 +1,6 @@
 package org.example.backend.service;
 
-
-import jakarta.transaction.Transactional;
+import org.example.backend.dto.CampaignRequest;
 import org.example.backend.exceptions.ResourceNotFoundException;
 import org.example.backend.models.Campaign;
 import org.example.backend.models.EmeraldAccount;
@@ -9,12 +8,9 @@ import org.example.backend.repository.CampaignRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 
-
 @Service
-@Transactional
 public class CampaignService {
 
     @Autowired
@@ -23,69 +19,81 @@ public class CampaignService {
     @Autowired
     private EmeraldAccountService emeraldAccountService;
 
+    // Save a new campaign
+    public Campaign save(CampaignRequest campaignRequest) {
+        EmeraldAccount account = emeraldAccountService.getAccount();
 
-    public Campaign save(Long accountId, Campaign campaign){
-        EmeraldAccount account = emeraldAccountService.getAccount(accountId);
-
-        if(account.getBalance().compareTo(campaign.getCampaignFund()) < 0){
-            throw new IllegalArgumentException("Insufficient funds");
+        // Check if there are sufficient funds
+        if (account.getBalance() < campaignRequest.campaignFund()) {
+            throw new IllegalArgumentException("Insufficient funds in the account");
         }
 
-        emeraldAccountService.updateBalance(accountId, campaign.getCampaignFund());
+        // Deduct campaign fund from account balance
+        emeraldAccountService.updateAccount(account.getBalance() - campaignRequest.campaignFund());
 
-        campaign.setEmeraldAccount(account);
-
+        Campaign campaign = new Campaign();
+        campaign.setCampaignName(campaignRequest.campaignName());
+        campaign.setKeywords(campaignRequest.keywords());
+        campaign.setBidAmount(campaignRequest.bidAmount());
+        campaign.setCampaignFund(campaignRequest.campaignFund());
+        campaign.setStatus(campaignRequest.status());
+        campaign.setTown(campaignRequest.town());
+        campaign.setRadius(campaignRequest.radius());
 
         return campaignRepository.save(campaign);
     }
 
-
-    public List<Campaign> findAll(){
+    // Get all campaigns
+    public List<Campaign> findAll() {
         return campaignRepository.findAll();
     }
 
-
-    public Campaign findById( Long id){
+    // Find a campaign by ID
+    public Campaign findById(Long id) {
         return campaignRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Campaign not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found with id: " + id));
     }
 
-
-    public void delete(Long id){
+    // Delete a campaign
+    public void delete(Long id) {
         Campaign campaign = findById(id);
         campaignRepository.delete(campaign);
     }
 
-
-    public Campaign update(Long id,Campaign campaignDetails){
+    // Update an existing campaign
+    public Campaign update(Long id, CampaignRequest campaignDetails) {
         Campaign existingCampaign = findById(id);
-        EmeraldAccount account = existingCampaign.getEmeraldAccount();
+        Double oldFund = existingCampaign.getCampaignFund();
+        Double newFund = campaignDetails.campaignFund();
 
-        BigDecimal oldFund = existingCampaign.getCampaignFund();
-        BigDecimal newFund = campaignDetails.getCampaignFund();
+        EmeraldAccount account = emeraldAccountService.getAccount();
 
-        if (newFund.compareTo(oldFund) > 0) {
-            BigDecimal difference = newFund.subtract(oldFund);
+        // Handle balance check when updating
+        if (newFund > oldFund) {
+            Double difference = newFund - oldFund;
 
-            if (account.getBalance().compareTo(difference) < 0) {
-                throw new IllegalArgumentException("Insufficient funds on Emerald account for the update.");
+            if (account.getBalance() < difference) {
+                throw new IllegalArgumentException("Insufficient funds for updating the campaign.");
             }
 
-            emeraldAccountService.updateBalance(account.getId(), difference);
-        } else if (newFund.compareTo(oldFund) < 0) {
-            BigDecimal difference = oldFund.subtract(newFund);
-            account.setBalance(account.getBalance().add(difference));
-            emeraldAccountService.updateBalance(account.getId(), BigDecimal.ZERO); // Aktualizacja salda konta
+            // Deduct the difference from the account balance
+            emeraldAccountService.updateAccount( account.getBalance() - difference);
+
+        } else if (newFund < oldFund) {
+            Double difference = oldFund - newFund;
+
+            // Add the difference back to the account balance
+            emeraldAccountService.updateAccount(account.getBalance() + difference);
         }
 
-        existingCampaign.setCampaignName(campaignDetails.getCampaignName());
-        existingCampaign.setKeywords(campaignDetails.getKeywords());
-        existingCampaign.setBidAmount(campaignDetails.getBidAmount());
+        // Update campaign fields
+        existingCampaign.setCampaignName(campaignDetails.campaignName());
+        existingCampaign.setKeywords(campaignDetails.keywords());
+        existingCampaign.setBidAmount(campaignDetails.bidAmount());
         existingCampaign.setCampaignFund(newFund);
-        existingCampaign.setStatus(campaignDetails.isStatus());
-        existingCampaign.setTown(campaignDetails.getTown());
-        existingCampaign.setRadius(campaignDetails.getRadius());
+        existingCampaign.setStatus(campaignDetails.status());
+        existingCampaign.setTown(campaignDetails.town());
+        existingCampaign.setRadius(campaignDetails.radius());
 
         return campaignRepository.save(existingCampaign);
     }

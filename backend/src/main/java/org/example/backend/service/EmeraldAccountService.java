@@ -2,11 +2,8 @@ package org.example.backend.service;
 
 import org.example.backend.models.EmeraldAccount;
 import org.example.backend.repository.EmeraldAccountRepository;
-import org.hibernate.ResourceClosedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 
 @Service
 public class EmeraldAccountService {
@@ -14,21 +11,21 @@ public class EmeraldAccountService {
     @Autowired
     private EmeraldAccountRepository emeraldAccountRepository;
 
-    public EmeraldAccount createAccount(BigDecimal initBalance){
-        EmeraldAccount emeraldAccount = new EmeraldAccount();
+    private static final Long DEFAULT_ACCOUNT_ID = 1L; // Assuming the account created has ID 1
+
+    // Method to update the balance for the single existing account
+    public EmeraldAccount updateAccount(Double initBalance) {
+        EmeraldAccount emeraldAccount = emeraldAccountRepository.findById(DEFAULT_ACCOUNT_ID)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+        emeraldAccount.setBalance(initBalance);
+
         return emeraldAccountRepository.save(emeraldAccount);
     }
 
-    public EmeraldAccount getAccount(Long id){
-        return emeraldAccountRepository.findById(id)
-                .orElseThrow(()-> new ResourceClosedException("Account not found"));
+
+    public EmeraldAccount getAccount() {
+        return emeraldAccountRepository.findById(DEFAULT_ACCOUNT_ID)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
     }
-
-    public EmeraldAccount updateBalance(Long accountId, BigDecimal amount){
-        EmeraldAccount account = getAccount(accountId);
-        account.setBalance(account.getBalance().subtract(amount));
-        return emeraldAccountRepository.save(account);
-    }
-
-
 }

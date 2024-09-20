@@ -1,6 +1,5 @@
 package org.example.backend.models;
 
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -8,10 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-
-
-import java.math.BigDecimal;
-
 
 @Entity
 @Table(name = "campaigns")
@@ -34,12 +29,12 @@ public class Campaign {
     @NotNull(message = "Bid amount is mandatory")
     @DecimalMin(value = "0.01", message = "Bid amount must be greater than 0.01")
     @Column(nullable = false)
-    private BigDecimal bidAmount;
+    private Double bidAmount;
 
     @NotNull(message = "Campaign fund is mandatory")
     @DecimalMin(value = "0.01", message = "Campaign fund must be greater than 0.01")
     @Column(nullable = false)
-    private BigDecimal campaignFund;
+    private Double campaignFund;
 
     @NotNull(message = "Status is mandatory")
     @Column(nullable = false)
@@ -53,14 +48,10 @@ public class Campaign {
     @Column(nullable = false)
     private int radius;
 
-    @ManyToOne
-    @JoinColumn(name = "emerald_account_id", nullable = false)
-    private EmeraldAccount emeraldAccount;
-
 
     public Campaign() {}
 
-    public Campaign(String campaignName, String keywords, BigDecimal bidAmount, BigDecimal campaignFund, boolean status, String town, int radius) {
+    public Campaign(String campaignName, String keywords, Double bidAmount, Double campaignFund, boolean status, String town, int radius) {
         this.campaignName = campaignName;
         this.keywords = keywords;
         this.bidAmount = bidAmount;
