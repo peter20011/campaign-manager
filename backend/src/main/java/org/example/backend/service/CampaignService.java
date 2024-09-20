@@ -68,22 +68,21 @@ public class CampaignService {
 
         EmeraldAccount account = emeraldAccountService.getAccount();
 
-        // Handle balance check when updating
-        if (newFund > oldFund) {
-            Double difference = newFund - oldFund;
+        // Calculate the difference between the old and new campaign funds
+        Double difference = newFund - oldFund;
 
+        // If the new fund is greater than the old fund (i.e., increasing the fund)
+        if (difference > 0) {
             if (account.getBalance() < difference) {
                 throw new IllegalArgumentException("Insufficient funds for updating the campaign.");
             }
-
             // Deduct the difference from the account balance
-            emeraldAccountService.updateAccount( account.getBalance() - difference);
+            emeraldAccountService.updateAccount(account.getBalance() - difference);
 
-        } else if (newFund < oldFund) {
-            Double difference = oldFund - newFund;
-
-            // Add the difference back to the account balance
-            emeraldAccountService.updateAccount(account.getBalance() + difference);
+        } else if (difference < 0) {
+            // If the new fund is smaller than the old fund (i.e., decreasing the fund)
+            // Add the difference back to the account balance (since the difference will be negative, this adds the absolute value)
+            emeraldAccountService.updateAccount(account.getBalance() + Math.abs(difference));
         }
 
         // Update campaign fields
